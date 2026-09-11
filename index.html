@@ -1088,12 +1088,15 @@
       const ext = p.format === "png" ? "png" : "jpg";
       const filename = `${sourceFileBase}_bogen.${ext}`;
 
+      const objectUrl = URL.createObjectURL(finalBlob);
       const a = document.createElement("a");
-      a.href = URL.createObjectURL(finalBlob);
+      a.href = objectUrl;
       a.download = filename;
       document.body.appendChild(a);
       a.click();
       a.remove();
+      // Deferred so the browser has started the download before the URL dies.
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
       els.statusLine.textContent = "Heruntergeladen.";
       els.statusLine.classList.add("ok");
     } catch (err) {
