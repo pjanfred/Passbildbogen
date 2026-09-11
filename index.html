@@ -494,7 +494,7 @@
         </div>
         <div class="row">
           <label for="gap">Abstand zwischen Bildern (mm)</label>
-          <input type="number" id="gap" value="4" min="0" max="30" step="0.5">
+          <input type="number" id="gap" value="2" min="0" max="30" step="0.5">
         </div>
         <div class="toggle-row">
           <label for="autoOptimize">Automatisch möglichst viele Bilder aufs Blatt (mit Drehung)</label>
@@ -596,7 +596,7 @@
       sheetHmm: clampFloat(els.sheetH.value, 30, 500, 150),
       rows: clampInt(els.rows.value, 1, 8, 2),
       cols: clampInt(els.cols.value, 1, 8, 2),
-      gapMm: clampFloat(els.gap.value, 0, 30, 4),
+      gapMm: clampFloat(els.gap.value, 0, 30, 2),
       autoOptimize: els.autoOptimize.checked,
       cutLines: els.cutLines.checked,
       dpi: clampInt(els.dpi.value, 72, 600, 300),
@@ -771,7 +771,14 @@
     ctx.restore();
   }
 
-  function drawWatermark(text, dpi, sheetWpx, sheetHpx) {
+  function rectsOverlap(a, b) {
+    return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+  }
+
+  // Bottom-right corner watermark. Skipped entirely if a photo cell would sit
+  // under it — a tight grid can reach all the way into that corner, and a
+  // watermark stamped across a passport photo would make the sheet unusable.
+  function drawWatermark(text, dpi, sheetWpx, sheetHpx, cells) {
     if (!text) return;
     const targetHpx = mmToPx(2.2, dpi);
     ctx.font = `600 ${targetHpx}px ${getComputedStyle(document.body).getPropertyValue("--font-mono").trim() || "monospace"}`;
@@ -780,6 +787,12 @@
     const metrics = ctx.measureText(text);
     const x = Math.max(0, sheetWpx - metrics.width - marginPx);
     const y = Math.max(targetHpx, sheetHpx - marginPx);
+
+    const ascent = metrics.actualBoundingBoxAscent || targetHpx;
+    const descent = metrics.actualBoundingBoxDescent || targetHpx * 0.25;
+    const box = { x, y: y - ascent, w: metrics.width, h: ascent + descent };
+    if (cells.some((c) => rectsOverlap(box, c))) return;
+
     ctx.fillStyle = "rgba(120,120,120,0.92)";
     ctx.fillText(text, x, y);
   }
@@ -861,7 +874,7 @@
       }
     }
 
-    drawWatermark(WATERMARK_TEXT, p.dpi, sheetWpx, sheetHpx);
+    drawWatermark(WATERMARK_TEXT, p.dpi, sheetWpx, sheetHpx, cells);
 
     const rotatedNote = layout.mixed
       ? " · teilweise gedreht für optimale Blattnutzung"
