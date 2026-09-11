@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Passbildbogen</title>
-<meta name="description" content="Erstelle im Browser einen Passbildbogen aus einem Foto – Maße, Blattformat, Raster und Wasserzeichen frei einstellbar. Läuft vollständig lokal, keine Uploads.">
+<meta name="description" content="Erstelle im Browser einen Passbildbogen aus einem Foto – Maße, Blattformat und Raster frei einstellbar. Läuft vollständig lokal, keine Uploads.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -508,15 +508,6 @@
       </fieldset>
 
       <fieldset>
-        <legend>Wasserzeichen</legend>
-        <div class="toggle-row">
-          <label for="watermarkOn">Text unten rechts einblenden</label>
-          <span class="switch"><input type="checkbox" id="watermarkOn" checked><span class="slider"></span></span>
-        </div>
-        <input type="text" id="watermarkText" value="created with a script powered by jan-it.de" maxlength="120">
-      </fieldset>
-
-      <fieldset>
         <legend>Ausgabe</legend>
         <div class="duo">
           <div class="field"><span>DPI</span><input type="number" id="dpi" value="300" min="72" max="600" step="1"></div>
@@ -562,8 +553,6 @@
     autoOptimize: $("autoOptimize"),
     autoOptimizeHint: $("autoOptimizeHint"),
     cutLines: $("cutLines"),
-    watermarkOn: $("watermarkOn"),
-    watermarkText: $("watermarkText"),
     dpi: $("dpi"),
     fileFormat: $("fileFormat"),
     downloadBtn: $("downloadBtn"),
@@ -573,6 +562,8 @@
     canvas: $("sheetCanvas"),
   };
   const ctx = els.canvas.getContext("2d");
+
+  const WATERMARK_TEXT = "created with a script powered by jan-it.de";
 
   let sourceImage = null; // HTMLImageElement once a photo is loaded
   let sourceFileBase = "passbild";
@@ -608,8 +599,6 @@
       gapMm: clampFloat(els.gap.value, 0, 30, 4),
       autoOptimize: els.autoOptimize.checked,
       cutLines: els.cutLines.checked,
-      watermarkOn: els.watermarkOn.checked,
-      watermarkText: els.watermarkText.value.trim(),
       dpi: clampInt(els.dpi.value, 72, 600, 300),
       format: els.fileFormat.value,
     };
@@ -797,9 +786,7 @@
       }
     }
 
-    if (p.watermarkOn) {
-      drawWatermark(p.watermarkText, p.dpi, sheetWpx, sheetHpx);
-    }
+    drawWatermark(WATERMARK_TEXT, p.dpi, sheetWpx, sheetHpx);
 
     const rotatedNote = rotated ? " · gedreht für optimale Blattnutzung" : "";
     els.captionLine.textContent = sourceImage
@@ -970,7 +957,7 @@
 
   const liveInputs = [
     els.photoW, els.photoH, els.sheetW, els.sheetH, els.rows, els.cols,
-    els.gap, els.cutLines, els.watermarkOn, els.watermarkText, els.dpi,
+    els.gap, els.cutLines, els.dpi,
   ];
   liveInputs.forEach((el) => {
     const evt = (el.type === "checkbox") ? "change" : "input";
