@@ -1,0 +1,14 @@
+{
+  "name": "Passbildbogen",
+  "short_name": "Passbildbogen",
+  "description": "Erstelle im Browser einen Passbildbogen aus einem Foto – läuft vollständig lokal, keine Uploads.",
+  "lang": "de",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#eeece3",
+  "theme_color": "#d6006f",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

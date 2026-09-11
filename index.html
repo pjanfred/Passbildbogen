@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Passbildbogen</title>
 <meta name="description" content="Erstelle im Browser einen Passbildbogen aus einem Foto – Maße, Blattformat und Raster frei einstellbar. Läuft vollständig lokal, keine Uploads.">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#d6006f">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -1110,6 +1112,12 @@
   setAutoOptimizeUi(els.autoOptimize.checked);
   render();
 })();
+</script>
+
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js"));
+  }
 </script>
 
 </body>
