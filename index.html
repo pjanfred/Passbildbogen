@@ -1,0 +1,1037 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Passbildbogen</title>
+<meta name="description" content="Erstelle im Browser einen Passbildbogen aus einem Foto – Maße, Blattformat, Raster und Wasserzeichen frei einstellbar. Läuft vollständig lokal, keine Uploads.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light dark;
+    --paper: #eeece3;
+    --paper-raised: #ffffff;
+    --ink: #14171a;
+    --ink-soft: #565c60;
+    --ink-faint: #8b9095;
+    --line: #d7d2c3;
+    --line-strong: #b9b3a0;
+    --accent: #d6006f;
+    --accent-ink: #ffffff;
+    --cyan: #00789e;
+    --positive: #1f7a54;
+    --positive-bg: #e4f2ea;
+    --danger: #b23a2e;
+    --danger-bg: #fbe9e6;
+    --shadow: 0 1px 2px rgba(20, 23, 26, 0.06), 0 8px 24px -12px rgba(20, 23, 26, 0.18);
+    --radius: 10px;
+    --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+    --font-body: "Source Sans 3", "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #15171a;
+      --paper-raised: #1e2124;
+      --ink: #ece9e0;
+      --ink-soft: #aeb0ab;
+      --ink-faint: #767a76;
+      --line: #33373a;
+      --line-strong: #454a4d;
+      --accent: #ff4c9d;
+      --accent-ink: #14171a;
+      --cyan: #3fc1e8;
+      --positive: #3fcb8e;
+      --positive-bg: #16261f;
+      --danger: #ff7a63;
+      --danger-bg: #2b1c18;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 28px -12px rgba(0, 0, 0, 0.6);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #15171a;
+    --paper-raised: #1e2124;
+    --ink: #ece9e0;
+    --ink-soft: #aeb0ab;
+    --ink-faint: #767a76;
+    --line: #33373a;
+    --line-strong: #454a4d;
+    --accent: #ff4c9d;
+    --accent-ink: #14171a;
+    --cyan: #3fc1e8;
+    --positive: #3fcb8e;
+    --positive-bg: #16261f;
+    --danger: #ff7a63;
+    --danger-bg: #2b1c18;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 28px -12px rgba(0, 0, 0, 0.6);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  img { max-width: 100%; }
+
+  a { color: var(--cyan); }
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .page {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px 24px 48px;
+  }
+
+  /* ---------- masthead ---------- */
+  .masthead {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 20px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--line);
+  }
+  .mark {
+    flex: none;
+    width: 42px;
+    height: 42px;
+    color: var(--accent);
+  }
+  .titles { flex: 1 1 auto; min-width: 0; }
+  .eyebrow {
+    margin: 0 0 2px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  h1 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(24px, 3.4vw, 34px);
+    line-height: 1.05;
+    text-wrap: balance;
+    letter-spacing: 0.002em;
+  }
+  .brand-tag {
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    text-decoration: none;
+    color: var(--ink-soft);
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    padding: 6px 14px;
+    white-space: nowrap;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .brand-tag:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ---------- workspace layout ---------- */
+  .workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 860px) {
+    .workspace { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+
+  /* ---------- preview stage ---------- */
+  .preview-stage { padding: 18px 18px 22px; order: 1; }
+  @media (max-width: 860px) { .preview-stage { order: 2; } }
+
+  .stage-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .stage-head h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 19px;
+    letter-spacing: 0.01em;
+  }
+  .stage-meta {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+
+  .light-table {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 360px;
+    padding: 34px;
+    border-radius: 8px;
+    background:
+      linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 100% 24px,
+      linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0 / 24px 100%,
+      var(--paper);
+    background-blend-mode: normal;
+    opacity: 1;
+  }
+  .light-table { background-color: var(--paper); }
+  .light-table::before {
+    content: "";
+    position: absolute; inset: 10px;
+    border: 1px dashed var(--line-strong);
+    border-radius: 4px;
+    pointer-events: none;
+  }
+  .reg-mark { position: absolute; width: 16px; height: 16px; color: var(--ink-faint); opacity: 0.8; }
+  .reg-mark.tl { top: 8px; left: 8px; }
+  .reg-mark.tr { top: 8px; right: 8px; }
+  .reg-mark.bl { bottom: 8px; left: 8px; }
+  .reg-mark.br { bottom: 8px; right: 8px; }
+
+  #sheetCanvas {
+    position: relative;
+    max-width: 100%;
+    max-height: 62vh;
+    width: auto;
+    height: auto;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.18), 0 18px 34px -18px rgba(0,0,0,0.45);
+    border-radius: 2px;
+  }
+
+  .stage-caption {
+    margin: 14px 2px 0;
+    font-size: 13px;
+    color: var(--ink-faint);
+  }
+
+  /* ---------- spec sheet (controls) ---------- */
+  .spec-sheet { order: 2; padding: 18px 18px 20px; display: flex; flex-direction: column; gap: 4px; }
+  @media (max-width: 860px) { .spec-sheet { order: 1; } }
+
+  .spec-sheet h2 {
+    margin: 0 0 12px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 19px;
+  }
+
+  .dropzone {
+    border: 1.5px dashed var(--line-strong);
+    border-radius: 8px;
+    padding: 18px 14px;
+    text-align: center;
+    cursor: pointer;
+    color: var(--ink-soft);
+    font-size: 13.5px;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    margin-bottom: 18px;
+  }
+  .dropzone:hover, .dropzone.drag { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, transparent); }
+  .dropzone strong { color: var(--ink); display: block; font-size: 14.5px; margin-bottom: 2px; }
+  .dropzone input { display: none; }
+  .dropzone .fname {
+    margin-top: 8px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--positive);
+    word-break: break-all;
+  }
+
+  fieldset {
+    border: none;
+    padding: 12px 0;
+    margin: 0;
+    border-top: 1px solid var(--line);
+  }
+  fieldset:first-of-type { border-top: none; padding-top: 0; }
+  legend {
+    padding: 0;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 10px;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 88px;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .row:last-child { margin-bottom: 0; }
+  .row label { font-size: 13.5px; color: var(--ink-soft); }
+  .row.wide { grid-template-columns: 1fr; }
+
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
+  .duo .field { display: flex; flex-direction: column; gap: 4px; }
+  .duo .field span { font-size: 12px; color: var(--ink-faint); }
+
+  input[type="number"], input[type="text"], select {
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    padding: 6px 8px;
+    width: 100%;
+  }
+  input[type="text"] { font-family: var(--font-body); font-size: 13.5px; }
+  select { font-family: var(--font-body); }
+
+  input:disabled, select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+  }
+  .toggle-row:last-child { margin-bottom: 0; }
+  .switch { position: relative; display: inline-block; width: 38px; height: 22px; flex: none; }
+  .switch input {
+    position: absolute; inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2;
+  }
+  .slider {
+    position: absolute; inset: 0; cursor: pointer;
+    background: var(--line-strong);
+    border-radius: 999px;
+    transition: background 0.15s ease;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .slider::before {
+    content: ""; position: absolute; height: 16px; width: 16px; left: 3px; top: 3px;
+    background: var(--paper-raised);
+    border-radius: 50%;
+    transition: transform 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+  }
+  .switch input:checked + .slider { background: var(--accent); }
+  .switch input:checked + .slider::before { transform: translateX(16px); }
+
+  .hint {
+    margin: -4px 0 8px;
+    font-size: 12px;
+    color: var(--ink-faint);
+  }
+
+  .actions { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .fmt-row { display: flex; align-items: center; gap: 10px; }
+  .fmt-row label { font-size: 13.5px; color: var(--ink-soft); }
+  .fmt-row select { width: auto; flex: 1; }
+
+  button.primary {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 16.5px;
+    letter-spacing: 0.01em;
+    color: var(--accent-ink);
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: filter 0.15s ease, transform 0.05s ease;
+  }
+  button.primary:hover { filter: brightness(1.06); }
+  button.primary:active { transform: translateY(1px); }
+  button.primary:disabled { opacity: 0.55; cursor: not-allowed; filter: none; }
+
+  .status-line {
+    font-size: 12.5px;
+    min-height: 16px;
+    color: var(--ink-faint);
+  }
+  .status-line.ok { color: var(--positive); }
+
+  .reject-stamp {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--danger);
+    background: var(--danger-bg);
+    border: 1px solid var(--danger);
+    border-radius: 6px;
+    padding: 8px 10px;
+    transform: rotate(-0.6deg);
+  }
+
+  .foot {
+    margin-top: 26px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px;
+    color: var(--ink-faint);
+  }
+  .foot a { color: var(--ink-faint); text-decoration: underline; text-underline-offset: 2px; }
+  .foot a:hover { color: var(--accent); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header class="masthead">
+    <svg class="mark" viewBox="0 0 42 42" fill="none" aria-hidden="true">
+      <rect x="1" y="1" width="40" height="40" rx="4" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M1 12h6M1 30h6M41 12h-6M41 30h-6M12 1v6M30 1v6M12 41v-6M30 41v-6" stroke="currentColor" stroke-width="1.6"/>
+      <circle cx="21" cy="17" r="5.4" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M10 33c2.6-6 8-8.6 11-8.6S29.4 27 32 33" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>
+    <div class="titles">
+      <p class="eyebrow">Passbild-Werkzeug</p>
+      <h1>Passbildbogen</h1>
+    </div>
+    <a class="brand-tag" href="https://jan-it.de" target="_blank" rel="noopener">jan-it.de</a>
+  </header>
+
+  <main class="workspace">
+    <section class="panel preview-stage" aria-label="Vorschau">
+      <div class="stage-head">
+        <h2>Vorschau</h2>
+        <span class="stage-meta" id="metaLine">100 × 150 mm · 300 dpi</span>
+      </div>
+      <div class="light-table">
+        <svg class="reg-mark tl" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0v16M0 8h16" stroke="currentColor" stroke-width="1"/><circle cx="8" cy="8" r="3.4" stroke="currentColor" stroke-width="1" fill="none"/></svg>
+        <svg class="reg-mark tr" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0v16M0 8h16" stroke="currentColor" stroke-width="1"/><circle cx="8" cy="8" r="3.4" stroke="currentColor" stroke-width="1" fill="none"/></svg>
+        <svg class="reg-mark bl" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0v16M0 8h16" stroke="currentColor" stroke-width="1"/><circle cx="8" cy="8" r="3.4" stroke="currentColor" stroke-width="1" fill="none"/></svg>
+        <svg class="reg-mark br" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0v16M0 8h16" stroke="currentColor" stroke-width="1"/><circle cx="8" cy="8" r="3.4" stroke="currentColor" stroke-width="1" fill="none"/></svg>
+        <canvas id="sheetCanvas" width="1181" height="1772"></canvas>
+      </div>
+      <p class="stage-caption" id="captionLine">Beispielansicht mit Platzhalter – lade links ein Foto hoch, um deinen eigenen Bogen zu sehen.</p>
+    </section>
+
+    <section class="panel spec-sheet" aria-label="Einstellungen">
+      <h2>Einstellungen</h2>
+
+      <label class="dropzone" id="dropzone" for="fileInput">
+        <strong>Foto hochladen</strong>
+        Klicken oder Bild hierher ziehen (JPEG/PNG)
+        <input type="file" id="fileInput" accept="image/*">
+        <div class="fname" id="fileName" hidden></div>
+      </label>
+
+      <fieldset>
+        <legend>Passbild-Maße</legend>
+        <div class="duo">
+          <div class="field"><span>Breite (mm)</span><input type="number" id="photoW" value="35" min="10" max="200" step="0.5"></div>
+          <div class="field"><span>Höhe (mm)</span><input type="number" id="photoH" value="45" min="10" max="200" step="0.5"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Blattformat</legend>
+        <div class="row">
+          <label for="sheetPreset">Vorlage</label>
+        </div>
+        <select id="sheetPreset" style="margin-bottom:8px;">
+          <option value="100x150">10 × 15 cm</option>
+          <option value="90x130">9 × 13 cm</option>
+          <option value="130x180">13 × 18 cm</option>
+          <option value="210x297">DIN A4</option>
+          <option value="custom">Benutzerdefiniert</option>
+        </select>
+        <div class="duo">
+          <div class="field"><span>Breite (mm)</span><input type="number" id="sheetW" value="100" min="30" max="500" step="1"></div>
+          <div class="field"><span>Höhe (mm)</span><input type="number" id="sheetH" value="150" min="30" max="500" step="1"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Raster &amp; Abstand</legend>
+        <div class="duo">
+          <div class="field"><span>Zeilen</span><input type="number" id="rows" value="2" min="1" max="8" step="1"></div>
+          <div class="field"><span>Spalten</span><input type="number" id="cols" value="2" min="1" max="8" step="1"></div>
+        </div>
+        <div class="row">
+          <label for="gap">Abstand zwischen Bildern (mm)</label>
+          <input type="number" id="gap" value="4" min="0" max="30" step="0.5">
+        </div>
+        <div class="toggle-row">
+          <label for="autoOptimize">Automatisch möglichst viele Bilder aufs Blatt (mit Drehung)</label>
+          <span class="switch"><input type="checkbox" id="autoOptimize"><span class="slider"></span></span>
+        </div>
+        <p class="hint" id="autoOptimizeHint" hidden>Zeilen/Spalten werden automatisch berechnet; Bilder werden bei Bedarf um 90° gedreht angeordnet, um mehr auf das Blatt zu bekommen.</p>
+        <div class="toggle-row">
+          <label for="cutLines">Schnittlinien anzeigen</label>
+          <span class="switch"><input type="checkbox" id="cutLines" checked><span class="slider"></span></span>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Wasserzeichen</legend>
+        <div class="toggle-row">
+          <label for="watermarkOn">Text unten rechts einblenden</label>
+          <span class="switch"><input type="checkbox" id="watermarkOn" checked><span class="slider"></span></span>
+        </div>
+        <input type="text" id="watermarkText" value="created with a script powered by jan-it.de" maxlength="120">
+      </fieldset>
+
+      <fieldset>
+        <legend>Ausgabe</legend>
+        <div class="duo">
+          <div class="field"><span>DPI</span><input type="number" id="dpi" value="300" min="72" max="600" step="1"></div>
+          <div class="field"><span>Format</span>
+            <select id="fileFormat">
+              <option value="jpg">JPEG</option>
+              <option value="png">PNG</option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="actions">
+        <div id="statusLine" class="status-line" role="status" aria-live="polite"></div>
+        <button class="primary" id="downloadBtn" type="button">Bogen herunterladen</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>Läuft vollständig in deinem Browser – hochgeladene Fotos verlassen dein Gerät nie und werden nirgendwo gespeichert. Ein Werkzeug von <a href="https://jan-it.de" target="_blank" rel="noopener">jan-it.de</a>.</p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const $ = (id) => document.getElementById(id);
+
+  const els = {
+    dropzone: $("dropzone"),
+    fileInput: $("fileInput"),
+    fileName: $("fileName"),
+    photoW: $("photoW"),
+    photoH: $("photoH"),
+    sheetPreset: $("sheetPreset"),
+    sheetW: $("sheetW"),
+    sheetH: $("sheetH"),
+    rows: $("rows"),
+    cols: $("cols"),
+    gap: $("gap"),
+    autoOptimize: $("autoOptimize"),
+    autoOptimizeHint: $("autoOptimizeHint"),
+    cutLines: $("cutLines"),
+    watermarkOn: $("watermarkOn"),
+    watermarkText: $("watermarkText"),
+    dpi: $("dpi"),
+    fileFormat: $("fileFormat"),
+    downloadBtn: $("downloadBtn"),
+    statusLine: $("statusLine"),
+    metaLine: $("metaLine"),
+    captionLine: $("captionLine"),
+    canvas: $("sheetCanvas"),
+  };
+  const ctx = els.canvas.getContext("2d");
+
+  let sourceImage = null; // HTMLImageElement once a photo is loaded
+  let sourceFileBase = "passbild";
+  let manualRows = els.rows.value;
+  let manualCols = els.cols.value;
+
+  // ---------- helpers ----------
+
+  function mmToPx(mm, dpi) {
+    return Math.round((mm / 25.4) * dpi);
+  }
+
+  function clampInt(v, lo, hi, fallback) {
+    const n = Math.round(Number(v));
+    if (!Number.isFinite(n)) return fallback;
+    return Math.min(hi, Math.max(lo, n));
+  }
+
+  function clampFloat(v, lo, hi, fallback) {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.min(hi, Math.max(lo, n));
+  }
+
+  function readParams() {
+    return {
+      photoWmm: clampFloat(els.photoW.value, 10, 200, 35),
+      photoHmm: clampFloat(els.photoH.value, 10, 200, 45),
+      sheetWmm: clampFloat(els.sheetW.value, 30, 500, 100),
+      sheetHmm: clampFloat(els.sheetH.value, 30, 500, 150),
+      rows: clampInt(els.rows.value, 1, 8, 2),
+      cols: clampInt(els.cols.value, 1, 8, 2),
+      gapMm: clampFloat(els.gap.value, 0, 30, 4),
+      autoOptimize: els.autoOptimize.checked,
+      cutLines: els.cutLines.checked,
+      watermarkOn: els.watermarkOn.checked,
+      watermarkText: els.watermarkText.value.trim(),
+      dpi: clampInt(els.dpi.value, 72, 600, 300),
+      format: els.fileFormat.value,
+    };
+  }
+
+  // Given a cell footprint (w × h px), how many fit on the sheet in a simple grid.
+  function bestFit(cellW, cellH, sheetW, sheetH, gap) {
+    const cols = Math.floor((sheetW + gap) / (cellW + gap));
+    const rows = Math.floor((sheetH + gap) / (cellH + gap));
+    return { rows: Math.max(0, rows), cols: Math.max(0, cols) };
+  }
+
+  // Tries the photo upright and rotated 90° and picks whichever grid fits more copies.
+  function computeAutoLayout(photoWpx, photoHpx, sheetWpx, sheetHpx, gapPx) {
+    const normal = bestFit(photoWpx, photoHpx, sheetWpx, sheetHpx, gapPx);
+    const rotated = bestFit(photoHpx, photoWpx, sheetWpx, sheetHpx, gapPx);
+    const normalCount = normal.rows * normal.cols;
+    const rotatedCount = rotated.rows * rotated.cols;
+    if (rotatedCount > normalCount) {
+      return { rows: rotated.rows, cols: rotated.cols, rotated: true, count: rotatedCount };
+    }
+    return { rows: normal.rows, cols: normal.cols, rotated: false, count: normalCount };
+  }
+
+  // Centered crop rect on the source image matching the target aspect ratio.
+  function cropRect(srcW, srcH, targetW, targetH) {
+    const targetRatio = targetW / targetH;
+    const srcRatio = srcW / srcH;
+    let newW, newH;
+    if (srcRatio > targetRatio) {
+      newH = srcH;
+      newW = Math.round(srcH * targetRatio);
+    } else {
+      newW = srcW;
+      newH = Math.round(srcW / targetRatio);
+    }
+    const cx = srcW / 2;
+    const cy = srcH / 2;
+    let left = cx - newW / 2;
+    let top = cy - newH / 2;
+    left = Math.max(0, Math.min(left, srcW - newW));
+    top = Math.max(0, Math.min(top, srcH - newH));
+    return { sx: Math.round(left), sy: Math.round(top), sw: newW, sh: newH };
+  }
+
+  function drawPlaceholderPhoto(x, y, w, h) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x, y, w, h);
+    ctx.clip();
+    ctx.fillStyle = "#dfe2e4";
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = "#c3c8cb";
+    const headR = w * 0.24;
+    ctx.beginPath();
+    ctx.arc(x + w / 2, y + h * 0.36, headR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(x + w / 2, y + h * 1.02, w * 0.42, h * 0.34, 0, Math.PI, 0, true);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Draws one photo cell at (x, y) with footprint cellW × cellH. When `rotated` is
+  // true the photo content itself (photoWpx × photoHpx) is turned 90° to fill that
+  // rotated footprint, which is how the auto-optimize layout packs more copies in.
+  function drawCell(x, y, cellW, cellH, photoWpx, photoHpx, rotated, crop) {
+    ctx.save();
+    if (rotated) {
+      ctx.translate(x + cellW / 2, y + cellH / 2);
+      ctx.rotate(Math.PI / 2);
+      if (sourceImage) {
+        ctx.drawImage(sourceImage, crop.sx, crop.sy, crop.sw, crop.sh, -photoWpx / 2, -photoHpx / 2, photoWpx, photoHpx);
+      } else {
+        drawPlaceholderPhoto(-photoWpx / 2, -photoHpx / 2, photoWpx, photoHpx);
+      }
+    } else {
+      if (sourceImage) {
+        ctx.drawImage(sourceImage, crop.sx, crop.sy, crop.sw, crop.sh, x, y, photoWpx, photoHpx);
+      } else {
+        drawPlaceholderPhoto(x, y, photoWpx, photoHpx);
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawWatermark(text, dpi, sheetWpx, sheetHpx) {
+    if (!text) return;
+    const targetHpx = mmToPx(2.2, dpi);
+    ctx.font = `600 ${targetHpx}px ${getComputedStyle(document.body).getPropertyValue("--font-mono").trim() || "monospace"}`;
+    ctx.textBaseline = "alphabetic";
+    const marginPx = mmToPx(3, dpi);
+    const metrics = ctx.measureText(text);
+    const x = Math.max(0, sheetWpx - metrics.width - marginPx);
+    const y = Math.max(targetHpx, sheetHpx - marginPx);
+    ctx.fillStyle = "rgba(120,120,120,0.92)";
+    ctx.fillText(text, x, y);
+  }
+
+  function render() {
+    const p = readParams();
+    const photoWpx = mmToPx(p.photoWmm, p.dpi);
+    const photoHpx = mmToPx(p.photoHmm, p.dpi);
+    const sheetWpx = mmToPx(p.sheetWmm, p.dpi);
+    const sheetHpx = mmToPx(p.sheetHmm, p.dpi);
+    const gapPx = mmToPx(p.gapMm, p.dpi);
+
+    let rows = p.rows;
+    let cols = p.cols;
+    let rotated = false;
+
+    if (p.autoOptimize) {
+      const auto = computeAutoLayout(photoWpx, photoHpx, sheetWpx, sheetHpx, gapPx);
+      rows = auto.rows;
+      cols = auto.cols;
+      rotated = auto.rotated;
+      els.rows.value = rows || "";
+      els.cols.value = cols || "";
+    }
+
+    els.metaLine.textContent = `${p.sheetWmm} × ${p.sheetHmm} mm · ${p.dpi} dpi`;
+
+    if (rows < 1 || cols < 1) {
+      els.statusLine.innerHTML = '<span class="reject-stamp">⨯ Passbild ist zu groß für dieses Blattformat</span>';
+      els.downloadBtn.disabled = true;
+      return null;
+    }
+
+    const cellW = rotated ? photoHpx : photoWpx;
+    const cellH = rotated ? photoWpx : photoHpx;
+    const gridW = cols * cellW + (cols - 1) * gapPx;
+    const gridH = rows * cellH + (rows - 1) * gapPx;
+
+    if (gridW > sheetWpx || gridH > sheetHpx) {
+      els.statusLine.innerHTML = '<span class="reject-stamp">⨯ passt nicht aufs Blatt – Zeilen/Spalten/Abstand reduzieren</span>';
+      els.downloadBtn.disabled = true;
+      return null;
+    }
+    els.statusLine.textContent = "";
+    els.statusLine.classList.remove("ok");
+    els.downloadBtn.disabled = false;
+
+    // Cap total pixel count so very high DPI / large sheets stay responsive.
+    const MAX_PIXELS = 40_000_000;
+    let scale = 1;
+    if (sheetWpx * sheetHpx > MAX_PIXELS) {
+      scale = Math.sqrt(MAX_PIXELS / (sheetWpx * sheetHpx));
+    }
+    const cw = Math.round(sheetWpx * scale);
+    const ch = Math.round(sheetHpx * scale);
+    els.canvas.width = cw;
+    els.canvas.height = ch;
+
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, sheetWpx, sheetHpx);
+
+    const offsetX = Math.floor((sheetWpx - gridW) / 2);
+    const offsetY = Math.floor((sheetHpx - gridH) / 2);
+
+    let crop = null;
+    if (sourceImage) {
+      crop = cropRect(sourceImage.naturalWidth, sourceImage.naturalHeight, photoWpx, photoHpx);
+    }
+
+    const positions = [];
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const x = offsetX + c * (cellW + gapPx);
+        const y = offsetY + r * (cellH + gapPx);
+        drawCell(x, y, cellW, cellH, photoWpx, photoHpx, rotated, crop);
+        positions.push([x, y]);
+      }
+    }
+
+    if (p.cutLines) {
+      const lineW = Math.max(1, mmToPx(0.25, p.dpi));
+      const half = lineW / 2;
+      ctx.strokeStyle = "rgba(150,150,150,0.95)";
+      ctx.lineWidth = lineW;
+      for (const [x, y] of positions) {
+        ctx.strokeRect(x + half, y + half, cellW - lineW, cellH - lineW);
+      }
+    }
+
+    if (p.watermarkOn) {
+      drawWatermark(p.watermarkText, p.dpi, sheetWpx, sheetHpx);
+    }
+
+    const rotatedNote = rotated ? " · gedreht für optimale Blattnutzung" : "";
+    els.captionLine.textContent = sourceImage
+      ? `${rows * cols} Passbilder · ${p.photoWmm} × ${p.photoHmm} mm · ${p.gapMm} mm Abstand${rotatedNote}`
+      : "Beispielansicht mit Platzhalter – lade links ein Foto hoch, um deinen eigenen Bogen zu sehen.";
+
+    return Object.assign({}, p, { rows, cols, rotated });
+  }
+
+  // ---------- DPI metadata patching (JFIF / pHYs) ----------
+
+  function setJpegDpi(buffer, dpi) {
+    const data = new Uint8Array(buffer);
+    if (data.length < 4 || data[0] !== 0xff || data[1] !== 0xd8) return buffer;
+
+    const payload = new Uint8Array(14);
+    const asciiJFIF = [0x4a, 0x46, 0x49, 0x46, 0x00]; // "JFIF\0"
+    payload.set(asciiJFIF, 0);
+    payload[5] = 1; payload[6] = 2; // version 1.2
+    payload[7] = 1; // units: DPI
+    payload[8] = (dpi >> 8) & 0xff; payload[9] = dpi & 0xff;
+    payload[10] = (dpi >> 8) & 0xff; payload[11] = dpi & 0xff;
+    payload[12] = 0; payload[13] = 0; // no thumbnail
+
+    const segLen = payload.length + 2;
+    const app0 = new Uint8Array(2 + 2 + payload.length);
+    app0[0] = 0xff; app0[1] = 0xe0;
+    app0[2] = (segLen >> 8) & 0xff; app0[3] = segLen & 0xff;
+    app0.set(payload, 4);
+
+    let bodyStart = 2;
+    if (data[2] === 0xff && data[3] === 0xe0) {
+      const oldLen = (data[4] << 8) | data[5];
+      bodyStart = 2 + 2 + oldLen;
+    }
+    const out = new Uint8Array(2 + app0.length + (data.length - bodyStart));
+    out.set(data.subarray(0, 2), 0);
+    out.set(app0, 2);
+    out.set(data.subarray(bodyStart), 2 + app0.length);
+    return out.buffer;
+  }
+
+  const CRC_TABLE = (() => {
+    const table = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) {
+      let c = n;
+      for (let k = 0; k < 8; k++) c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+      table[n] = c >>> 0;
+    }
+    return table;
+  })();
+
+  function crc32(bytes) {
+    let c = 0xffffffff;
+    for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xff] ^ (c >>> 8);
+    return (c ^ 0xffffffff) >>> 0;
+  }
+
+  function u32be(n) {
+    return new Uint8Array([(n >>> 24) & 0xff, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff]);
+  }
+
+  function setPngDpi(buffer, dpi) {
+    const data = new Uint8Array(buffer);
+    const sig = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+    if (data.length < 8 || !sig.every((b, i) => data[i] === b)) return buffer;
+
+    const ppm = Math.round(dpi / 0.0254);
+    const chunkType = new Uint8Array([0x70, 0x48, 0x59, 0x73]); // "pHYs"
+    const chunkData = new Uint8Array(9);
+    chunkData.set(u32be(ppm), 0);
+    chunkData.set(u32be(ppm), 4);
+    chunkData[8] = 1; // unit: meters
+    const crcInput = new Uint8Array(chunkType.length + chunkData.length);
+    crcInput.set(chunkType, 0);
+    crcInput.set(chunkData, chunkType.length);
+    const crc = crc32(crcInput);
+
+    const physChunk = new Uint8Array(4 + 4 + 9 + 4);
+    physChunk.set(u32be(9), 0);
+    physChunk.set(chunkType, 4);
+    physChunk.set(chunkData, 8);
+    physChunk.set(u32be(crc), 17);
+
+    const ihdrLen = (data[8] << 24) | (data[9] << 16) | (data[10] << 8) | data[11];
+    const ihdrEnd = 8 + 4 + 4 + ihdrLen + 4;
+
+    const out = new Uint8Array(ihdrEnd + physChunk.length + (data.length - ihdrEnd));
+    out.set(data.subarray(0, ihdrEnd), 0);
+    out.set(physChunk, ihdrEnd);
+    out.set(data.subarray(ihdrEnd), ihdrEnd + physChunk.length);
+    return out.buffer;
+  }
+
+  // ---------- image loading ----------
+
+  function loadFile(file) {
+    if (!file || !file.type.startsWith("image/")) return;
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      sourceImage = img;
+      sourceFileBase = (file.name || "passbild").replace(/\.[^.]+$/, "");
+      els.fileName.textContent = file.name;
+      els.fileName.hidden = false;
+      URL.revokeObjectURL(url);
+      render();
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      els.statusLine.innerHTML = '<span class="reject-stamp">⨯ Bild konnte nicht gelesen werden</span>';
+    };
+    img.src = url;
+  }
+
+  els.fileInput.addEventListener("change", (e) => loadFile(e.target.files && e.target.files[0]));
+
+  ["dragenter", "dragover"].forEach((evt) =>
+    els.dropzone.addEventListener(evt, (e) => { e.preventDefault(); els.dropzone.classList.add("drag"); })
+  );
+  ["dragleave", "drop"].forEach((evt) =>
+    els.dropzone.addEventListener(evt, (e) => { e.preventDefault(); els.dropzone.classList.remove("drag"); })
+  );
+  els.dropzone.addEventListener("drop", (e) => {
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    loadFile(file);
+  });
+
+  // ---------- sheet presets ----------
+
+  els.sheetPreset.addEventListener("change", () => {
+    const v = els.sheetPreset.value;
+    if (v === "custom") return;
+    const [w, h] = v.split("x").map(Number);
+    els.sheetW.value = w;
+    els.sheetH.value = h;
+    render();
+  });
+
+  function syncPresetFromFields() {
+    const cur = `${els.sheetW.value}x${els.sheetH.value}`;
+    const match = Array.from(els.sheetPreset.options).find((o) => o.value === cur);
+    els.sheetPreset.value = match ? match.value : "custom";
+  }
+
+  // ---------- auto-optimize toggle ----------
+
+  function setAutoOptimizeUi(on) {
+    els.autoOptimizeHint.hidden = !on;
+    els.rows.disabled = on;
+    els.cols.disabled = on;
+    if (on) {
+      // Remember the manual grid so it can be restored when the toggle is switched off.
+      manualRows = els.rows.value;
+      manualCols = els.cols.value;
+    } else {
+      els.rows.value = manualRows;
+      els.cols.value = manualCols;
+    }
+  }
+
+  els.autoOptimize.addEventListener("change", () => {
+    setAutoOptimizeUi(els.autoOptimize.checked);
+    render();
+  });
+
+  // ---------- live re-render on any control change ----------
+
+  const liveInputs = [
+    els.photoW, els.photoH, els.sheetW, els.sheetH, els.rows, els.cols,
+    els.gap, els.cutLines, els.watermarkOn, els.watermarkText, els.dpi,
+  ];
+  liveInputs.forEach((el) => {
+    const evt = (el.type === "checkbox") ? "change" : "input";
+    el.addEventListener(evt, () => {
+      if (el === els.sheetW || el === els.sheetH) syncPresetFromFields();
+      if ((el === els.rows || el === els.cols) && !els.autoOptimize.checked) {
+        manualRows = els.rows.value;
+        manualCols = els.cols.value;
+      }
+      render();
+    });
+  });
+
+  // ---------- download ----------
+
+  async function handleDownload() {
+    const p = render();
+    if (!p) return;
+
+    els.downloadBtn.disabled = true;
+    const prevLabel = els.downloadBtn.textContent;
+    els.downloadBtn.textContent = "Wird erzeugt …";
+
+    try {
+      const mime = p.format === "png" ? "image/png" : "image/jpeg";
+      const quality = p.format === "png" ? undefined : 0.95;
+
+      const blob = await new Promise((resolve, reject) => {
+        els.canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("toBlob fehlgeschlagen"))), mime, quality);
+      });
+
+      let buffer = await blob.arrayBuffer();
+      buffer = p.format === "png" ? setPngDpi(buffer, p.dpi) : setJpegDpi(buffer, p.dpi);
+      const finalBlob = new Blob([buffer], { type: mime });
+
+      const ext = p.format === "png" ? "png" : "jpg";
+      const filename = `${sourceFileBase}_bogen.${ext}`;
+
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(finalBlob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      els.statusLine.textContent = "Heruntergeladen.";
+      els.statusLine.classList.add("ok");
+    } catch (err) {
+      els.statusLine.innerHTML = '<span class="reject-stamp">⨯ Download fehlgeschlagen</span>';
+    } finally {
+      els.downloadBtn.textContent = prevLabel;
+      els.downloadBtn.disabled = false;
+    }
+  }
+
+  els.downloadBtn.addEventListener("click", handleDownload);
+
+  // ---------- init ----------
+  setAutoOptimizeUi(els.autoOptimize.checked);
+  render();
+})();
+</script>
+
+</body>
+</html>
