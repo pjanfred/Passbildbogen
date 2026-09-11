@@ -4,6 +4,8 @@ Ein kleines Browser-Werkzeug, das aus einem Foto einen druckfertigen Passbildbog
 
 **[Direkt ausprobieren →](https://pjanfred.github.io/Passbildbogen/)**
 
+[![Buy Me A Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://buymeacoffee.com/pjanfred)
+
 ## Funktionen
 
 - Foto per Klick oder Drag & Drop einfügen
@@ -27,4 +29,4 @@ Es handelt sich um eine einzelne, abhängigkeitsfreie HTML-Datei. [`index.html`]
 
 MIT, siehe [LICENSE](LICENSE).
 
-Ein Werkzeug von [jan-it.de](https://jan-it.de).
+Ein Werkzeug von [jan-it.de](https://jan-it.de). Gefällt dir das Tool? [Spendier mir einen Kaffee ☕](https://buymeacoffee.com/pjanfred).
