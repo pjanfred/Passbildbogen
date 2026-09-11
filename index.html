@@ -611,16 +611,102 @@
     return { rows: Math.max(0, rows), cols: Math.max(0, cols) };
   }
 
-  // Tries the photo upright and rotated 90° and picks whichever grid fits more copies.
-  function computeAutoLayout(photoWpx, photoHpx, sheetWpx, sheetHpx, gapPx) {
-    const normal = bestFit(photoWpx, photoHpx, sheetWpx, sheetHpx, gapPx);
-    const rotated = bestFit(photoHpx, photoWpx, sheetWpx, sheetHpx, gapPx);
-    const normalCount = normal.rows * normal.cols;
-    const rotatedCount = rotated.rows * rotated.cols;
-    if (rotatedCount > normalCount) {
-      return { rows: rotated.rows, cols: rotated.cols, rotated: true, count: rotatedCount };
+  // A grid of same-orientation cells, as a block of absolute {x,y,w,h,rotated}
+  // rects (relative to the block's own top-left corner) plus the block's footprint.
+  function buildGrid(rows, cols, cellW, cellH, gap, rotated) {
+    const rects = [];
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        rects.push({ x: c * (cellW + gap), y: r * (cellH + gap), w: cellW, h: cellH, rotated });
+      }
     }
-    return { rows: normal.rows, cols: normal.cols, rotated: false, count: normalCount };
+    return {
+      rects,
+      rows,
+      cols,
+      w: cols > 0 ? cols * cellW + (cols - 1) * gap : 0,
+      h: rows > 0 ? rows * cellH + (rows - 1) * gap : 0,
+      count: rows * cols,
+    };
+  }
+
+  // Places `extra` to the right of `main`, each block centered on the other's cross axis.
+  function combineRight(main, extra, gap) {
+    const h = Math.max(main.h, extra.h);
+    const rects = [
+      ...main.rects.map((r) => ({ ...r, y: r.y + (h - main.h) / 2 })),
+      ...extra.rects.map((r) => ({ ...r, x: r.x + main.w + gap, y: r.y + (h - extra.h) / 2 })),
+    ];
+    return { rects, w: main.w + gap + extra.w, h, count: main.count + extra.count };
+  }
+
+  // Places `extra` below `main`, each block centered on the other's cross axis.
+  function combineBottom(main, extra, gap) {
+    const w = Math.max(main.w, extra.w);
+    const rects = [
+      ...main.rects.map((r) => ({ ...r, x: r.x + (w - main.w) / 2 })),
+      ...extra.rects.map((r) => ({ ...r, x: r.x + (w - extra.w) / 2, y: r.y + main.h + gap })),
+    ];
+    return { rects, w, h: main.h + gap + extra.h, count: main.count + extra.count };
+  }
+
+  // Finds the layout that fits the most copies on the sheet. Tries the photo
+  // upright and rotated 90° as a uniform grid, and also tries filling whatever
+  // margin either of those grids leaves over with a perpendicular strip of the
+  // other orientation — a plain single-orientation grid often wastes a leftover
+  // strip that's too narrow for another upright photo but wide enough rotated.
+  function computeAutoLayout(photoWpx, photoHpx, sheetWpx, sheetHpx, gapPx) {
+    const normalFit = bestFit(photoWpx, photoHpx, sheetWpx, sheetHpx, gapPx);
+    const normalGrid = buildGrid(normalFit.rows, normalFit.cols, photoWpx, photoHpx, gapPx, false);
+
+    const rotatedFit = bestFit(photoHpx, photoWpx, sheetWpx, sheetHpx, gapPx);
+    const rotatedGrid = buildGrid(rotatedFit.rows, rotatedFit.cols, photoHpx, photoWpx, gapPx, true);
+
+    const candidates = [normalGrid, rotatedGrid];
+
+    // main = normal grid, extra strip = rotated photos in the leftover margin.
+    if (normalGrid.count > 0) {
+      const availW = sheetWpx - normalGrid.w - gapPx;
+      const fitRight = bestFit(photoHpx, photoWpx, availW, sheetHpx, gapPx);
+      if (fitRight.rows > 0 && fitRight.cols > 0) {
+        candidates.push(combineRight(normalGrid, buildGrid(fitRight.rows, fitRight.cols, photoHpx, photoWpx, gapPx, true), gapPx));
+      }
+      const availH = sheetHpx - normalGrid.h - gapPx;
+      const fitBottom = bestFit(photoHpx, photoWpx, sheetWpx, availH, gapPx);
+      if (fitBottom.rows > 0 && fitBottom.cols > 0) {
+        candidates.push(combineBottom(normalGrid, buildGrid(fitBottom.rows, fitBottom.cols, photoHpx, photoWpx, gapPx, true), gapPx));
+      }
+    }
+
+    // main = rotated grid, extra strip = upright photos in the leftover margin.
+    if (rotatedGrid.count > 0) {
+      const availW = sheetWpx - rotatedGrid.w - gapPx;
+      const fitRight = bestFit(photoWpx, photoHpx, availW, sheetHpx, gapPx);
+      if (fitRight.rows > 0 && fitRight.cols > 0) {
+        candidates.push(combineRight(rotatedGrid, buildGrid(fitRight.rows, fitRight.cols, photoWpx, photoHpx, gapPx, false), gapPx));
+      }
+      const availH = sheetHpx - rotatedGrid.h - gapPx;
+      const fitBottom = bestFit(photoWpx, photoHpx, sheetWpx, availH, gapPx);
+      if (fitBottom.rows > 0 && fitBottom.cols > 0) {
+        candidates.push(combineBottom(rotatedGrid, buildGrid(fitBottom.rows, fitBottom.cols, photoWpx, photoHpx, gapPx, false), gapPx));
+      }
+    }
+
+    let best = candidates[0];
+    for (const candidate of candidates) {
+      if (candidate.count > best.count) best = candidate;
+    }
+    const mixed = best !== normalGrid && best !== rotatedGrid;
+    return {
+      rects: best.rects,
+      rows: mixed ? undefined : best.rows,
+      cols: mixed ? undefined : best.cols,
+      w: best.w,
+      h: best.h,
+      count: best.count,
+      rotated: best.rects.some((r) => r.rotated),
+      mixed,
+    };
   }
 
   // Centered crop rect on the source image matching the target aspect ratio.
@@ -706,33 +792,27 @@
     const sheetHpx = mmToPx(p.sheetHmm, p.dpi);
     const gapPx = mmToPx(p.gapMm, p.dpi);
 
-    let rows = p.rows;
-    let cols = p.cols;
-    let rotated = false;
-
+    let layout;
     if (p.autoOptimize) {
-      const auto = computeAutoLayout(photoWpx, photoHpx, sheetWpx, sheetHpx, gapPx);
-      rows = auto.rows;
-      cols = auto.cols;
-      rotated = auto.rotated;
-      els.rows.value = rows || "";
-      els.cols.value = cols || "";
+      layout = computeAutoLayout(photoWpx, photoHpx, sheetWpx, sheetHpx, gapPx);
+      // A mixed layout has no single rows×cols shape, so leave the (disabled)
+      // fields blank rather than showing a number that would misrepresent it.
+      els.rows.value = layout.rows || "";
+      els.cols.value = layout.cols || "";
+    } else {
+      layout = buildGrid(p.rows, p.cols, photoWpx, photoHpx, gapPx, false);
+      layout.mixed = false;
     }
 
     els.metaLine.textContent = `${p.sheetWmm} × ${p.sheetHmm} mm · ${p.dpi} dpi`;
 
-    if (rows < 1 || cols < 1) {
+    if (layout.count < 1) {
       els.statusLine.innerHTML = '<span class="reject-stamp">⨯ Passbild ist zu groß für dieses Blattformat</span>';
       els.downloadBtn.disabled = true;
       return null;
     }
 
-    const cellW = rotated ? photoHpx : photoWpx;
-    const cellH = rotated ? photoWpx : photoHpx;
-    const gridW = cols * cellW + (cols - 1) * gapPx;
-    const gridH = rows * cellH + (rows - 1) * gapPx;
-
-    if (gridW > sheetWpx || gridH > sheetHpx) {
+    if (layout.w > sheetWpx || layout.h > sheetHpx) {
       els.statusLine.innerHTML = '<span class="reject-stamp">⨯ passt nicht aufs Blatt – Zeilen/Spalten/Abstand reduzieren</span>';
       els.downloadBtn.disabled = true;
       return null;
@@ -758,22 +838,17 @@
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, sheetWpx, sheetHpx);
 
-    const offsetX = Math.floor((sheetWpx - gridW) / 2);
-    const offsetY = Math.floor((sheetHpx - gridH) / 2);
+    const offsetX = Math.floor((sheetWpx - layout.w) / 2);
+    const offsetY = Math.floor((sheetHpx - layout.h) / 2);
 
     let crop = null;
     if (sourceImage) {
       crop = cropRect(sourceImage.naturalWidth, sourceImage.naturalHeight, photoWpx, photoHpx);
     }
 
-    const positions = [];
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const x = offsetX + c * (cellW + gapPx);
-        const y = offsetY + r * (cellH + gapPx);
-        drawCell(x, y, cellW, cellH, photoWpx, photoHpx, rotated, crop);
-        positions.push([x, y]);
-      }
+    const cells = layout.rects.map((r) => ({ x: offsetX + r.x, y: offsetY + r.y, w: r.w, h: r.h, rotated: r.rotated }));
+    for (const cell of cells) {
+      drawCell(cell.x, cell.y, cell.w, cell.h, photoWpx, photoHpx, cell.rotated, crop);
     }
 
     if (p.cutLines) {
@@ -781,19 +856,23 @@
       const half = lineW / 2;
       ctx.strokeStyle = "rgba(150,150,150,0.95)";
       ctx.lineWidth = lineW;
-      for (const [x, y] of positions) {
-        ctx.strokeRect(x + half, y + half, cellW - lineW, cellH - lineW);
+      for (const cell of cells) {
+        ctx.strokeRect(cell.x + half, cell.y + half, cell.w - lineW, cell.h - lineW);
       }
     }
 
     drawWatermark(WATERMARK_TEXT, p.dpi, sheetWpx, sheetHpx);
 
-    const rotatedNote = rotated ? " · gedreht für optimale Blattnutzung" : "";
+    const rotatedNote = layout.mixed
+      ? " · teilweise gedreht für optimale Blattnutzung"
+      : layout.rotated
+      ? " · gedreht für optimale Blattnutzung"
+      : "";
     els.captionLine.textContent = sourceImage
-      ? `${rows * cols} Passbilder · ${p.photoWmm} × ${p.photoHmm} mm · ${p.gapMm} mm Abstand${rotatedNote}`
+      ? `${layout.count} Passbilder · ${p.photoWmm} × ${p.photoHmm} mm · ${p.gapMm} mm Abstand${rotatedNote}`
       : "Beispielansicht mit Platzhalter – lade links ein Foto hoch, um deinen eigenen Bogen zu sehen.";
 
-    return Object.assign({}, p, { rows, cols, rotated });
+    return Object.assign({}, p, { count: layout.count, rotated: layout.rotated, mixed: layout.mixed });
   }
 
   // ---------- DPI metadata patching (JFIF / pHYs) ----------
