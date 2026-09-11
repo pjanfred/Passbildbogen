@@ -1,6 +1,6 @@
 # Passbildbogen
 
-Ein kleines Browser-Werkzeug, das aus einem Foto einen druckfertigen Passbildbogen erstellt – Passbild-Maße, Blattformat, Raster/Abstand und ein optionales Wasserzeichen sind frei einstellbar.
+Ein kleines Browser-Werkzeug, das aus einem Foto einen druckfertigen Passbildbogen erstellt – Passbild-Maße, Blattformat und Raster/Abstand sind frei einstellbar.
 
 **[Direkt ausprobieren →](https://pjanfred.github.io/Passbildbogen/)**
 
@@ -12,7 +12,7 @@ Ein kleines Browser-Werkzeug, das aus einem Foto einen druckfertigen Passbildbog
 - Raster (Zeilen/Spalten) und Abstand einstellbar
 - Automatische Optimierung: passt Zeilen/Spalten an und dreht Bilder bei Bedarf um 90°, um mehr Kopien aufs Blatt zu bekommen
 - Optionale Schnittlinien
-- Optionales Wasserzeichen unten rechts
+- Wasserzeichen unten rechts (fest, nicht deaktivierbar)
 - Export als JPEG oder PNG mit korrekter DPI-Angabe in den Bilddaten (JFIF- bzw. pHYs-Chunk)
 
 ## Datenschutz
