@@ -299,7 +299,7 @@
 
   .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
   .duo .field { display: flex; flex-direction: column; gap: 4px; }
-  .duo .field span { font-size: 12px; color: var(--ink-faint); }
+  .duo .field label { font-size: 12px; color: var(--ink-faint); }
 
   input[type="number"], input[type="text"], select {
     font-family: var(--font-mono);
@@ -465,8 +465,8 @@
       <fieldset>
         <legend>Passbild-Maße</legend>
         <div class="duo">
-          <div class="field"><span>Breite (mm)</span><input type="number" id="photoW" value="35" min="10" max="200" step="0.5"></div>
-          <div class="field"><span>Höhe (mm)</span><input type="number" id="photoH" value="45" min="10" max="200" step="0.5"></div>
+          <div class="field"><label for="photoW">Breite (mm)</label><input type="number" id="photoW" value="35" min="10" max="200" step="0.5"></div>
+          <div class="field"><label for="photoH">Höhe (mm)</label><input type="number" id="photoH" value="45" min="10" max="200" step="0.5"></div>
         </div>
       </fieldset>
 
@@ -483,16 +483,16 @@
           <option value="custom">Benutzerdefiniert</option>
         </select>
         <div class="duo">
-          <div class="field"><span>Breite (mm)</span><input type="number" id="sheetW" value="100" min="30" max="500" step="1"></div>
-          <div class="field"><span>Höhe (mm)</span><input type="number" id="sheetH" value="150" min="30" max="500" step="1"></div>
+          <div class="field"><label for="sheetW">Breite (mm)</label><input type="number" id="sheetW" value="100" min="30" max="500" step="1"></div>
+          <div class="field"><label for="sheetH">Höhe (mm)</label><input type="number" id="sheetH" value="150" min="30" max="500" step="1"></div>
         </div>
       </fieldset>
 
       <fieldset>
         <legend>Raster &amp; Abstand</legend>
         <div class="duo">
-          <div class="field"><span>Zeilen</span><input type="number" id="rows" value="2" min="1" max="8" step="1"></div>
-          <div class="field"><span>Spalten</span><input type="number" id="cols" value="2" min="1" max="8" step="1"></div>
+          <div class="field"><label for="rows">Zeilen</label><input type="number" id="rows" value="2" min="1" max="8" step="1"></div>
+          <div class="field"><label for="cols">Spalten</label><input type="number" id="cols" value="2" min="1" max="8" step="1"></div>
         </div>
         <div class="row">
           <label for="gap">Abstand zwischen Bildern (mm)</label>
@@ -512,8 +512,8 @@
       <fieldset>
         <legend>Ausgabe</legend>
         <div class="duo">
-          <div class="field"><span>DPI</span><input type="number" id="dpi" value="300" min="72" max="600" step="1"></div>
-          <div class="field"><span>Format</span>
+          <div class="field"><label for="dpi">DPI</label><input type="number" id="dpi" value="300" min="72" max="600" step="1"></div>
+          <div class="field"><label for="fileFormat">Format</label>
             <select id="fileFormat">
               <option value="jpg">JPEG</option>
               <option value="png">PNG</option>
