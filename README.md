@@ -2,8 +2,6 @@
 
 Ein kleines Browser-Werkzeug, das aus einem Foto einen druckfertigen Passbildbogen erstellt – Passbild-Maße, Blattformat und Raster/Abstand sind frei einstellbar.
 
-**[Direkt ausprobieren →](https://pjanfred.github.io/Passbildbogen/)**
-
 [![Buy Me A Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://buymeacoffee.com/pjanfred)
 
 ## Funktionen
