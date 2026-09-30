@@ -422,6 +422,8 @@
   }
   .foot a { color: var(--ink-faint); text-decoration: underline; text-underline-offset: 2px; }
   .foot a:hover { color: var(--accent); }
+  .legal-links { display: none; margin-top: 8px; }
+  .legal-links a + a { margin-left: 12px; }
 
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; animation: none !important; }
@@ -540,6 +542,10 @@
 
   <footer class="foot">
     <p>Läuft vollständig in deinem Browser – hochgeladene Fotos verlassen dein Gerät nie und werden nirgendwo gespeichert. Ein Werkzeug von <a href="https://jan-it.de" target="_blank" rel="noopener">jan-it.de</a>. Gefällt dir das Tool? <a href="https://buymeacoffee.com/pjanfred" target="_blank" rel="noopener">Spendier mir einen Kaffee ☕</a>.</p>
+    <p class="legal-links" id="legal-links"><a href="https://jan-it.de/impressum/" target="_blank" rel="noopener">Impressum</a><a href="https://jan-it.de/datenschutzerklaerung/" target="_blank" rel="noopener">Datenschutz</a></p>
+    <script>
+      if (/(^|\.)jan-it\.de$/i.test(location.hostname)) document.getElementById("legal-links").style.display = "block";
+    </script>
   </footer>
 </div>
 
