@@ -19,6 +19,12 @@ Ein kleines Browser-Werkzeug, das aus einem Foto einen druckfertigen Passbildbog
 
 Das Werkzeug läuft vollständig im Browser. Hochgeladene Fotos werden nirgendwo hochgeladen oder gespeichert – die gesamte Verarbeitung geschieht lokal auf dem Gerät.
 
+## Impressum & Datenschutz
+
+Die Links zu Impressum und Datenschutzerklärung im Footer (`legal-links`) gehören zu meiner Webseite [jan-it.de](https://jan-it.de) und werden nur bei Auslieferung über jan-it.de (oder eine Subdomain) angezeigt. Beim lokalen Öffnen sind sie ausgeblendet.
+
+**Forks und eigenes Hosting:** Wer das Projekt selbst veröffentlicht, ersetzt die Links (Suche nach `legal-links`) und die Hostname-Prüfung im Inline-Skript durch das eigene Impressum und die eigene Datenschutzerklärung.
+
 ## Lokal verwenden
 
 Es handelt sich um eine einzelne, abhängigkeitsfreie HTML-Datei. [`index.html`](index.html) im Browser öffnen – fertig.
