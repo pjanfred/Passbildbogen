@@ -29,6 +29,10 @@ Die Links zu Impressum und Datenschutzerklärung im Footer (`legal-links`) gehö
 
 Es handelt sich um eine einzelne, abhängigkeitsfreie HTML-Datei. [`index.html`](index.html) im Browser öffnen – fertig.
 
+## Deployment per FTP
+
+Bei jedem Push auf `main` lädt der Workflow [`.github/workflows/ftp-deploy.yml`](.github/workflows/ftp-deploy.yml) die Dateien per FTP/FTPS auf den Webserver. Dafür müssen im Repository unter *Settings → Secrets and variables → Actions* diese Secrets gesetzt sein: `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD` und optional `FTP_PROTOCOL` (Standard: `ftps`).
+
 ## Lizenz
 
 MIT, siehe [LICENSE](LICENSE).
